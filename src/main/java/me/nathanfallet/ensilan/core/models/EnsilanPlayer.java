@@ -1,9 +1,12 @@
 package me.nathanfallet.ensilan.core.models;
 
+import java.security.MessageDigest;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.UUID;
+
+import javax.xml.bind.DatatypeConverter;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -17,16 +20,23 @@ public class EnsilanPlayer {
     // Properties
     private UUID uuid;
     private PlayerScoreboard scoreboard;
+    private long login;
 
     // Cached current data
     private Long money;
     private Boolean admin;
+
+    // Authentication
+    private boolean authenticated;
+    private String password;
 
     // Bukkit constructor
     public EnsilanPlayer(final Player player) {
         // Set properties
         this.uuid = player.getUniqueId();
         this.scoreboard = new PlayerScoreboard("ENSILAN");
+        this.login = System.currentTimeMillis();
+        this.authenticated = !Core.getInstance().isAuthenticationEnabled();
 
         // Update player data
         try {
@@ -39,6 +49,7 @@ public class EnsilanPlayer {
                 // Save data to cache
                 money = result.getLong("money");
                 admin = result.getBoolean("admin");
+                password = result.getString("password");
 
                 // Update
                 PreparedStatement update = Core.getInstance().getConnection()
@@ -51,6 +62,7 @@ public class EnsilanPlayer {
                 // Save data to cache
                 money = 0L;
                 admin = false;
+                password = "";
 
                 // Insert
                 PreparedStatement insert = Core.getInstance().getConnection()
@@ -87,6 +99,11 @@ public class EnsilanPlayer {
     // Retrieve scoreboard
     public PlayerScoreboard getScoreboard() {
         return scoreboard;
+    }
+
+    // Login time
+    public long getLogin() {
+        return login;
     }
 
     // Cached money
@@ -164,5 +181,54 @@ public class EnsilanPlayer {
 			e.printStackTrace();
 		}
 	}
+
+    // Is player authenticated
+    public boolean isAuthenticated() {
+        return authenticated;
+    }
+
+    // Mask as authenticated
+    public void authenticate() {
+        this.authenticated = true;
+    }
+
+    // If the player has a password
+    public boolean hasPassword() {
+        return !password.isEmpty();
+    }
+
+    // Check password
+    public boolean checkPassword(String withPassword) {
+        return password.equals(hashPassword(withPassword));
+    }
+
+    // Set password
+    public void setPassword(String newPassword) {
+		try {
+            newPassword = hashPassword(newPassword);
+			PreparedStatement state = Core.getInstance().getConnection()
+					.prepareStatement("UPDATE players SET password = ? WHERE uuid = ?");
+			state.setString(1, newPassword);
+			state.setString(2, uuid.toString());
+			state.executeUpdate();
+			state.close();
+            password = newPassword;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+    // Utility to hash a password
+    private String hashPassword(String password) {
+        try {
+            MessageDigest md5 = MessageDigest.getInstance("MD5");
+            md5.update(password.getBytes());
+            byte[] digest = md5.digest();
+            return DatatypeConverter.printHexBinary(digest);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
 
 }

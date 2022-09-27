@@ -5,6 +5,10 @@ load: STARTUP
 version: 1.0
 api-version: 1.19
 commands:
+    login:
+        description: Commande de connexion
+    register:
+        description: Commande d'inscription
     leaderboard:
         description: Gérer les classements
         permission: ensilan.leaderboard

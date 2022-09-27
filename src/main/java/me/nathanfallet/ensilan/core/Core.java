@@ -23,13 +23,17 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import me.nathanfallet.ensilan.core.commands.LeaderboardCommand;
+import me.nathanfallet.ensilan.core.commands.LoginCommand;
 import me.nathanfallet.ensilan.core.commands.MoneyCommand;
+import me.nathanfallet.ensilan.core.commands.RegisterCommand;
 import me.nathanfallet.ensilan.core.commands.SetSpawnCommand;
 import me.nathanfallet.ensilan.core.commands.SpawnCommand;
+import me.nathanfallet.ensilan.core.events.PlayerAuthentication;
 import me.nathanfallet.ensilan.core.events.PlayerChat;
 import me.nathanfallet.ensilan.core.events.PlayerJoin;
 import me.nathanfallet.ensilan.core.events.PlayerQuit;
 import me.nathanfallet.ensilan.core.events.PlayerRespawn;
+import me.nathanfallet.ensilan.core.events.ServerPing;
 import me.nathanfallet.ensilan.core.interfaces.LeaderboardGenerator;
 import me.nathanfallet.ensilan.core.interfaces.ScoreboardGenerator;
 import me.nathanfallet.ensilan.core.models.EnsilanPlayer;
@@ -84,12 +88,16 @@ public class Core extends JavaPlugin {
         }
 
         // Register events
+        Bukkit.getPluginManager().registerEvents(new PlayerAuthentication(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerChat(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerJoin(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerQuit(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerRespawn(), this);
+        Bukkit.getPluginManager().registerEvents(new ServerPing(), this);
 
         // Register commands
+        getCommand("login").setExecutor(new LoginCommand());
+        getCommand("register").setExecutor(new RegisterCommand());
         getCommand("leaderboard").setExecutor(new LeaderboardCommand());
         getCommand("money").setExecutor(new MoneyCommand());
         getCommand("spawn").setExecutor(new SpawnCommand());
@@ -99,6 +107,9 @@ public class Core extends JavaPlugin {
         Bukkit.getScheduler().scheduleSyncRepeatingTask(this, new Runnable() {
             @Override
             public void run() {
+                // Store current time
+                long now = System.currentTimeMillis();
+
                 // Create scoreboard lines
                 FileConfiguration conf = getConfig();
                 List<String> headerLines = new ArrayList<>();
@@ -134,7 +145,18 @@ public class Core extends JavaPlugin {
                     lines.addAll(footerLines);
 
                     // Apply
-                    getPlayer(player.getUniqueId()).getScoreboard().update(player, lines);
+                    ep.getScoreboard().update(player, lines);
+
+                    // Check authentification state
+                    if (!ep.isAuthenticated()) {
+                        if (now - ep.getLogin() > 60_000) {
+                            player.kickPlayer("Delai de connexion expiré !");
+                        } else if (ep.hasPassword()) {
+                            player.sendMessage(ChatColor.RED + "Utilisez " + ChatColor.DARK_RED + "/login <password> " + ChatColor.RED + "pour vous connecter.");
+                        } else {
+                            player.sendMessage(ChatColor.RED + "Utilisez " + ChatColor.DARK_RED + "/register <password> <password> " + ChatColor.RED + "pour vous inscrire.");
+                        }
+                    }
                 }
 
                 // Refresh leaderboards
@@ -362,6 +384,12 @@ public class Core extends JavaPlugin {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // Authentication
+
+    public boolean isAuthenticationEnabled() {
+        return !Bukkit.getOnlineMode();
     }
     
 }
