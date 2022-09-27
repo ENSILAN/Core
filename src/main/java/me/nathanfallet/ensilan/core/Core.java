@@ -36,6 +36,7 @@ import me.nathanfallet.ensilan.core.events.PlayerRespawn;
 import me.nathanfallet.ensilan.core.events.ServerPing;
 import me.nathanfallet.ensilan.core.interfaces.LeaderboardGenerator;
 import me.nathanfallet.ensilan.core.interfaces.ScoreboardGenerator;
+import me.nathanfallet.ensilan.core.models.AbstractGame;
 import me.nathanfallet.ensilan.core.models.EnsilanPlayer;
 import me.nathanfallet.ensilan.core.models.Leaderboard;
 import me.nathanfallet.ensilan.core.models.Money;
@@ -53,6 +54,7 @@ public class Core extends JavaPlugin {
     // Properties
 	private Connection connection;
     private List<EnsilanPlayer> players;
+    private List<AbstractGame> games;
     private List<ScoreboardGenerator> scoreboardGenerators;
     private Map<String, LeaderboardGenerator> leaderboardGenerators;
     private Map<String, Leaderboard> leaderboards;
@@ -109,6 +111,11 @@ public class Core extends JavaPlugin {
             public void run() {
                 // Store current time
                 long now = System.currentTimeMillis();
+
+                // Refresh games
+                for (AbstractGame game : getGames()) {
+                    game.updateStatus();
+                }
 
                 // Create scoreboard lines
                 FileConfiguration conf = getConfig();
@@ -262,6 +269,17 @@ public class Core extends JavaPlugin {
 
         // No player found
         return null;
+    }
+
+    // Retrieve games
+    public List<AbstractGame> getGames() {
+        // Init list if needed
+        if (games == null) {
+            games = new ArrayList<>();
+        }
+
+        // Return list
+        return games;
     }
 
     // Retrieve scoreboard generators
