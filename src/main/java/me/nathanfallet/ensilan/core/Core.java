@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.ArrayList;
@@ -30,10 +31,12 @@ import me.nathanfallet.ensilan.core.commands.SetSpawnCommand;
 import me.nathanfallet.ensilan.core.commands.SpawnCommand;
 import me.nathanfallet.ensilan.core.events.PlayerAuthentication;
 import me.nathanfallet.ensilan.core.events.PlayerChat;
+import me.nathanfallet.ensilan.core.events.PlayerInteract;
 import me.nathanfallet.ensilan.core.events.PlayerJoin;
 import me.nathanfallet.ensilan.core.events.PlayerQuit;
 import me.nathanfallet.ensilan.core.events.PlayerRespawn;
 import me.nathanfallet.ensilan.core.events.ServerPing;
+import me.nathanfallet.ensilan.core.events.SignChange;
 import me.nathanfallet.ensilan.core.interfaces.LeaderboardGenerator;
 import me.nathanfallet.ensilan.core.interfaces.ScoreboardGenerator;
 import me.nathanfallet.ensilan.core.models.AbstractGame;
@@ -52,7 +55,7 @@ public class Core extends JavaPlugin {
     }
 
     // Properties
-	private Connection connection;
+    private Connection connection;
     private List<EnsilanPlayer> players;
     private List<AbstractGame> games;
     private List<ScoreboardGenerator> scoreboardGenerators;
@@ -68,8 +71,8 @@ public class Core extends JavaPlugin {
 
         // Configuration stuff
         saveDefaultConfig();
-		reloadConfig();
-        
+        reloadConfig();
+
         // Check connection
         if (!initDatabase()) {
             return;
@@ -89,13 +92,125 @@ public class Core extends JavaPlugin {
             }
         }
 
+        // Initialize leaderboards
+        Core.getInstance().getLeaderboardGenerators().put("money", new LeaderboardGenerator() {
+            @Override
+            public List<String> getLines(int limit) {
+                ArrayList<String> lines = new ArrayList<String>();
+
+                try {
+                    // Fetch data to MySQL Database
+                    Statement state = Core.getInstance().getConnection().createStatement();
+                    ResultSet result = state.executeQuery(
+                            "SELECT name, money " +
+                                    "FROM players " +
+                                    "WHERE money > 0" +
+                                    "ORDER BY money DESC " +
+                                    "LIMIT " + limit);
+
+                    // Set lines
+                    while (result.next()) {
+                        lines.add(
+                                result.getString("name") +
+                                        ChatColor.GOLD + " - " + ChatColor.YELLOW +
+                                        result.getInt("money") + Money.symbol);
+                    }
+                    result.close();
+                    state.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                return lines;
+            }
+
+            @Override
+            public String getTitle() {
+                return "Classement des joueurs selon leur argent";
+            }
+        });
+        Core.getInstance().getLeaderboardGenerators().put("score", new LeaderboardGenerator() {
+            @Override
+            public List<String> getLines(int limit) {
+                ArrayList<String> lines = new ArrayList<String>();
+
+                try {
+                    // Fetch data to MySQL Database
+                    Statement state = Core.getInstance().getConnection().createStatement();
+                    ResultSet result = state.executeQuery(
+                            "SELECT name, score " +
+                                    "FROM players " +
+                                    "WHERE score > 0" +
+                                    "ORDER BY score DESC " +
+                                    "LIMIT " + limit);
+
+                    // Set lines
+                    while (result.next()) {
+                        lines.add(
+                                result.getString("name") +
+                                        ChatColor.GOLD + " - " + ChatColor.YELLOW +
+                                        result.getInt("score") + " points");
+                    }
+                    result.close();
+                    state.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                return lines;
+            }
+
+            @Override
+            public String getTitle() {
+                return "Classement des joueurs selon leur score";
+            }
+        });
+        Core.getInstance().getLeaderboardGenerators().put("victories", new LeaderboardGenerator() {
+            @Override
+            public List<String> getLines(int limit) {
+                ArrayList<String> lines = new ArrayList<String>();
+
+                try {
+                    // Fetch data to MySQL Database
+                    Statement state = Core.getInstance().getConnection().createStatement();
+                    ResultSet result = state.executeQuery(
+                            "SELECT name, victories " +
+                                    "FROM players " +
+                                    "WHERE victories > 0" +
+                                    "ORDER BY victories DESC " +
+                                    "LIMIT " + limit);
+
+                    // Set lines
+                    while (result.next()) {
+                        lines.add(
+                                result.getString("name") +
+                                        ChatColor.GOLD + " - " + ChatColor.YELLOW +
+                                        result.getInt("victories") + " victoires");
+                    }
+                    result.close();
+                    state.close();
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
+
+                return lines;
+            }
+
+            @Override
+            public String getTitle() {
+                return "Classement des joueurs selon leur nombre de victoires";
+            }
+        });
+
         // Register events
         Bukkit.getPluginManager().registerEvents(new PlayerAuthentication(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerChat(), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerInteract(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerJoin(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerQuit(), this);
         Bukkit.getPluginManager().registerEvents(new PlayerRespawn(), this);
         Bukkit.getPluginManager().registerEvents(new ServerPing(), this);
+        Bukkit.getPluginManager().registerEvents(new SignChange(), this);
 
         // Register commands
         getCommand("login").setExecutor(new LoginCommand());
@@ -159,9 +274,11 @@ public class Core extends JavaPlugin {
                         if (now - ep.getLogin() > 60_000) {
                             player.kickPlayer("Delai de connexion expiré !");
                         } else if (ep.hasPassword()) {
-                            player.sendMessage(ChatColor.RED + "Utilisez " + ChatColor.DARK_RED + "/login <password> " + ChatColor.RED + "pour vous connecter.");
+                            player.sendMessage(ChatColor.RED + "Utilisez " + ChatColor.DARK_RED + "/login <password> "
+                                    + ChatColor.RED + "pour vous connecter.");
                         } else {
-                            player.sendMessage(ChatColor.RED + "Utilisez " + ChatColor.DARK_RED + "/register <password> <password> " + ChatColor.RED + "pour vous inscrire.");
+                            player.sendMessage(ChatColor.RED + "Utilisez " + ChatColor.DARK_RED
+                                    + "/register <password> <password> " + ChatColor.RED + "pour vous inscrire.");
                         }
                     }
                 }
@@ -192,6 +309,12 @@ public class Core extends JavaPlugin {
         }
         players = null;
 
+        // Remove games
+        for (AbstractGame game : games) {
+            game.saveSigns();
+        }
+        games = null;
+
         // Clear scoreboard generators
         scoreboardGenerators = null;
 
@@ -217,28 +340,39 @@ public class Core extends JavaPlugin {
 
     // Retrieve or initialize database connection
     public Connection getConnection() {
-		try {
-			if(connection == null || connection.isClosed()){
-				Class.forName("com.mysql.jdbc.Driver");
-				FileConfiguration conf = getConfig();
-				connection = DriverManager.getConnection("jdbc:mysql://"+conf.getString("database.host")+":"+conf.getInt("database.port")+"/"+conf.getString("database.database"),
-						conf.getString("database.user"), conf.getString("database.password"));
-			}
-		} catch (SQLException | ClassNotFoundException e) {
-			Bukkit.getLogger().severe("[ENSILAN Core] Un probleme est survenue lors de la connexion a la base de donnees");
-			Bukkit.getLogger().severe("[ENSILAN Core] Verifiez les informations dans le fichier de configuration");
-			Bukkit.getPluginManager().disablePlugin(this);
-			return null;
-		}
-		return connection;
-	}
+        try {
+            if (connection == null || connection.isClosed()) {
+                Class.forName("com.mysql.jdbc.Driver");
+                FileConfiguration conf = getConfig();
+                connection = DriverManager.getConnection(
+                        "jdbc:mysql://" + conf.getString("database.host") + ":" + conf.getInt("database.port") + "/"
+                                + conf.getString("database.database"),
+                        conf.getString("database.user"), conf.getString("database.password"));
+            }
+        } catch (SQLException | ClassNotFoundException e) {
+            Bukkit.getLogger()
+                    .severe("[ENSILAN Core] Un probleme est survenue lors de la connexion a la base de donnees");
+            Bukkit.getLogger().severe("[ENSILAN Core] Verifiez les informations dans le fichier de configuration");
+            Bukkit.getPluginManager().disablePlugin(this);
+            return null;
+        }
+        return connection;
+    }
 
     // Initialize database
     private boolean initDatabase() {
         try {
             Statement create = getConnection().createStatement();
-            create.executeUpdate(
-						"CREATE TABLE IF NOT EXISTS `players` (`uuid` varchar(255) NOT NULL, `name` varchar(255) NOT NULL, `password` varchar(255) NOT NULL DEFAULT '', `money` bigint NOT NULL DEFAULT '0', `admin` tinyint NOT NULL DEFAULT '0', PRIMARY KEY (`uuid`))");
+            create.executeUpdate("CREATE TABLE IF NOT EXISTS `players` (" +
+                    "`uuid` varchar(255) NOT NULL," +
+                    "`name` varchar(255) NOT NULL," +
+                    "`password` varchar(255) NOT NULL DEFAULT ''," +
+                    "`money` bigint NOT NULL DEFAULT '0'," +
+                    "`score` bigint NOT NULL DEFAULT '0'," +
+                    "`victories` bigint NOT NULL DEFAULT '0'," +
+                    "`admin` tinyint NOT NULL DEFAULT '0'," +
+                    "PRIMARY KEY (`uuid`)" +
+                    ")");
             create.close();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -409,5 +543,5 @@ public class Core extends JavaPlugin {
     public boolean isAuthenticationEnabled() {
         return !Bukkit.getOnlineMode();
     }
-    
+
 }
