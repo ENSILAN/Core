@@ -1,6 +1,5 @@
 package me.nathanfallet.ensilan.core.events;
 
-import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
