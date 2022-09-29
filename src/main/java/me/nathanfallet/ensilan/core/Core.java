@@ -122,7 +122,7 @@ public class Core extends JavaPlugin {
                     ResultSet result = state.executeQuery(
                             "SELECT name, money " +
                                     "FROM players " +
-                                    "WHERE money > 0" +
+                                    "WHERE money > 0 " +
                                     "ORDER BY money DESC " +
                                     "LIMIT " + limit);
 
@@ -158,7 +158,7 @@ public class Core extends JavaPlugin {
                     ResultSet result = state.executeQuery(
                             "SELECT name, score " +
                                     "FROM players " +
-                                    "WHERE score > 0" +
+                                    "WHERE score > 0 " +
                                     "ORDER BY score DESC " +
                                     "LIMIT " + limit);
 
@@ -194,7 +194,7 @@ public class Core extends JavaPlugin {
                     ResultSet result = state.executeQuery(
                             "SELECT name, victories " +
                                     "FROM players " +
-                                    "WHERE victories > 0" +
+                                    "WHERE victories > 0 " +
                                     "ORDER BY victories DESC " +
                                     "LIMIT " + limit);
 
