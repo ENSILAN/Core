@@ -10,3 +10,4 @@ database:
 server:
   name: 'ENSILAN'
   ip: 'ensilan.fr'
+  spawn_protection: false

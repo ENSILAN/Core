@@ -21,6 +21,7 @@ import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkit.event.Event;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import me.nathanfallet.ensilan.core.commands.LeaderboardCommand;
@@ -37,8 +38,10 @@ import me.nathanfallet.ensilan.core.events.PlayerQuit;
 import me.nathanfallet.ensilan.core.events.PlayerRespawn;
 import me.nathanfallet.ensilan.core.events.ServerPing;
 import me.nathanfallet.ensilan.core.events.SignChange;
+import me.nathanfallet.ensilan.core.events.WorldProtection;
 import me.nathanfallet.ensilan.core.interfaces.LeaderboardGenerator;
 import me.nathanfallet.ensilan.core.interfaces.ScoreboardGenerator;
+import me.nathanfallet.ensilan.core.interfaces.WorldProtectionRule;
 import me.nathanfallet.ensilan.core.models.AbstractGame;
 import me.nathanfallet.ensilan.core.models.EnsilanPlayer;
 import me.nathanfallet.ensilan.core.models.Leaderboard;
@@ -58,6 +61,7 @@ public class Core extends JavaPlugin {
     private Connection connection;
     private List<EnsilanPlayer> players;
     private List<AbstractGame> games;
+    private List<WorldProtectionRule> worldProtectionRules;
     private List<ScoreboardGenerator> scoreboardGenerators;
     private Map<String, LeaderboardGenerator> leaderboardGenerators;
     private Map<String, Leaderboard> leaderboards;
@@ -90,6 +94,20 @@ public class Core extends JavaPlugin {
                     entity.remove();
                 }
             }
+        }
+
+        // World protection rules
+        if (getConfig().getBoolean("server.spawn_protection")) {
+            getWorldProtectionRules().add(new WorldProtectionRule() {
+                @Override
+                public boolean isProtected(Location location) {
+                    return location.getWorld().getName().equals(Bukkit.getWorlds().get(0).getName());
+                }
+                @Override
+                public boolean isAllowedInProtectedLocation(Player player, EnsilanPlayer ep, Location location, Event event) {
+                    return player.isOp();
+                }
+            });
         }
 
         // Initialize leaderboards
@@ -126,7 +144,7 @@ public class Core extends JavaPlugin {
 
             @Override
             public String getTitle() {
-                return "Classement des joueurs selon leur argent";
+                return "Money";
             }
         });
         Core.getInstance().getLeaderboardGenerators().put("score", new LeaderboardGenerator() {
@@ -162,7 +180,7 @@ public class Core extends JavaPlugin {
 
             @Override
             public String getTitle() {
-                return "Classement des joueurs selon leur score";
+                return "Score";
             }
         });
         Core.getInstance().getLeaderboardGenerators().put("victories", new LeaderboardGenerator() {
@@ -198,7 +216,7 @@ public class Core extends JavaPlugin {
 
             @Override
             public String getTitle() {
-                return "Classement des joueurs selon leur nombre de victoires";
+                return "Victoires";
             }
         });
 
@@ -211,6 +229,7 @@ public class Core extends JavaPlugin {
         Bukkit.getPluginManager().registerEvents(new PlayerRespawn(), this);
         Bukkit.getPluginManager().registerEvents(new ServerPing(), this);
         Bukkit.getPluginManager().registerEvents(new SignChange(), this);
+        Bukkit.getPluginManager().registerEvents(new WorldProtection(), this);
 
         // Register commands
         getCommand("login").setExecutor(new LoginCommand());
@@ -315,6 +334,9 @@ public class Core extends JavaPlugin {
         }
         games = null;
 
+        // Clear world protection rules
+        worldProtectionRules = null;
+
         // Clear scoreboard generators
         scoreboardGenerators = null;
 
@@ -414,6 +436,17 @@ public class Core extends JavaPlugin {
 
         // Return list
         return games;
+    }
+
+    // Retrieve protection rules
+    public List<WorldProtectionRule> getWorldProtectionRules() {
+        // Init list if needed
+        if (worldProtectionRules == null) {
+            worldProtectionRules = new ArrayList<>();
+        }
+
+        // Return list
+        return worldProtectionRules;
     }
 
     // Retrieve scoreboard generators
