@@ -24,6 +24,8 @@ public class EnsilanPlayer {
 
     // Cached current data
     private Long money;
+    private Long score;
+    private Long victories;
     private Boolean admin;
 
     // Authentication
@@ -111,6 +113,16 @@ public class EnsilanPlayer {
         return money;
     }
 
+    // Cached score
+    public Long getCachedScore() {
+        return score;
+    }
+
+    // Cached victories
+    public Long getCachedVictories() {
+        return victories;
+    }
+
     // Cached admin
     public Boolean getCachedAdmin() {
         return admin;
@@ -132,6 +144,42 @@ public class EnsilanPlayer {
 			e.printStackTrace();
 		}
 		return money;
+	}
+
+    // Get score
+    public Long getScore() {
+		try {
+			PreparedStatement state = Core.getInstance().getConnection()
+				.prepareStatement("SELECT score FROM players WHERE uuid = ?");
+			state.setString(1, uuid.toString());
+			ResultSet result = state.executeQuery();
+			if (result.next()) {
+				score = result.getLong("score");
+			}
+			result.close();
+			state.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return score;
+	}
+
+    // Get victories
+    public Long getVictories() {
+		try {
+			PreparedStatement state = Core.getInstance().getConnection()
+				.prepareStatement("SELECT victories FROM players WHERE uuid = ?");
+			state.setString(1, uuid.toString());
+			ResultSet result = state.executeQuery();
+			if (result.next()) {
+				victories = result.getLong("victories");
+			}
+			result.close();
+			state.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+		return victories;
 	}
 
     // Get admin
@@ -167,16 +215,31 @@ public class EnsilanPlayer {
 		}
 	}
 
-    // Set admin
-    public void setAdmin(Boolean newAdmin) {
+    // Set score
+    public void setScore(Long newScore) {
 		try {
 			PreparedStatement state = Core.getInstance().getConnection()
-					.prepareStatement("UPDATE players SET admin = ? WHERE uuid = ?");
-			state.setBoolean(1, newAdmin);
+					.prepareStatement("UPDATE players SET score = ? WHERE uuid = ?");
+			state.setLong(1, newScore);
 			state.setString(2, uuid.toString());
 			state.executeUpdate();
 			state.close();
-            admin = newAdmin;
+            score = newScore;
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
+
+    // Set victories
+    public void setVictories(Long newVictories) {
+		try {
+			PreparedStatement state = Core.getInstance().getConnection()
+					.prepareStatement("UPDATE players SET victories = ? WHERE uuid = ?");
+			state.setLong(1, newVictories);
+			state.setString(2, uuid.toString());
+			state.executeUpdate();
+			state.close();
+            victories = newVictories;
 		} catch (SQLException e) {
 			e.printStackTrace();
 		}
