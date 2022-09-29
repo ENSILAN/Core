@@ -5,6 +5,7 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockIgniteEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -280,5 +281,18 @@ public class WorldProtection implements Listener {
             }
         }
     }
+    
+    @EventHandler
+	public void onBlockIgnite(BlockIgniteEvent event) {
+		// World protection rules
+        for (WorldProtectionRule rule : Core.getInstance().getWorldProtectionRules()) {
+            if (
+                rule.isProtected(event.getBlock().getLocation())
+            ) {
+                event.setCancelled(true);
+                return;
+            }
+        }
+	}
     
 }
