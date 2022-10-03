@@ -60,6 +60,13 @@ public class PlayerScoreboard {
             objective.getScore(newLines.get(pos)).setScore(newLines.size() - pos);
         }
 
+        // Remove old lines which left if needed
+        if (lastLines != null && lastLines.size() > newLines.size()) {
+            for (int pos = newLines.size(); pos < lastLines.size(); pos++) {
+                objective.getScoreboard().resetScores(lastLines.get(pos));
+            }
+        }
+
         // Store new lines
         lastLines = newLines;
 
