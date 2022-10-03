@@ -1,5 +1,7 @@
 package me.nathanfallet.ensilan.core.events;
 
+import java.util.UUID;
+
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.event.EventHandler;
@@ -20,6 +22,14 @@ public class PlayerInteract implements Listener {
 					if (g.getSigns() != null) {
 						for (Location l : g.getSigns()) {
 							if (e.getClickedBlock().getLocation().equals(l)) {
+								for (AbstractGame c : Core.getInstance().getGames()) {
+									for (UUID uuid : c.getAllPlayers()) {
+										if (e.getPlayer().getUniqueId().equals(uuid)) {
+											e.getPlayer().sendMessage("§cVous êtes déjà dans une partie !");
+											return;
+										}
+									}
+								}
 								g.preJoin(
 									e.getPlayer(),
 									Core.getInstance().getPlayer(e.getPlayer().getUniqueId())

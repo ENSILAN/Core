@@ -11,6 +11,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.entity.EntityShootBowEvent;
+import org.bukkit.event.entity.FoodLevelChangeEvent;
 import org.bukkit.event.entity.ProjectileLaunchEvent;
 import org.bukkit.event.player.PlayerBedEnterEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
@@ -89,7 +90,6 @@ public class WorldProtection implements Listener {
                     !rule.isAllowedInProtectedLocation((Player) event.getEntity(), ep, event.getEntity().getLocation(), event)
                 ) {
                     event.setCancelled(true);
-                    event.getEntity().sendMessage(ChatColor.RED + "Vous n'avez pas le droit de faire ça ici !");
                     return;
                 }
             }
@@ -206,7 +206,6 @@ public class WorldProtection implements Listener {
                     !rule.isAllowedInProtectedLocation((Player) event.getEntity(), ep, event.getEntity().getLocation(), event)
                 ) {
                     event.setCancelled(true);
-                    event.getEntity().sendMessage(ChatColor.RED + "Vous n'avez pas le droit de faire ça ici !");
                     return;
                 }
             }
@@ -225,6 +224,23 @@ public class WorldProtection implements Listener {
                 ) {
                     event.setCancelled(true);
                     event.getDamager().sendMessage(ChatColor.RED + "Vous n'avez pas le droit de faire ça ici !");
+                    return;
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onFoodLevelChange(FoodLevelChangeEvent event) {
+        // World protection rules
+        if (event.getEntity() instanceof Player) {
+            EnsilanPlayer ep = Core.getInstance().getPlayer(event.getEntity().getUniqueId());
+            for (WorldProtectionRule rule : Core.getInstance().getWorldProtectionRules()) {
+                if (
+                    rule.isProtected(event.getEntity().getLocation()) &&
+                    !rule.isAllowedInProtectedLocation((Player) event.getEntity(), ep, event.getEntity().getLocation(), event)
+                ) {
+                    event.setCancelled(true);
                     return;
                 }
             }
