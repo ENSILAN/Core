@@ -5,7 +5,9 @@ import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockIgniteEvent;
+import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.event.block.SignChangeEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
@@ -39,6 +41,38 @@ public class WorldProtection implements Listener {
             if (
                 rule.isProtected(location) &&
                 !rule.isAllowedInProtectedLocation(event.getPlayer(), ep, location, event)
+            ) {
+                event.setCancelled(true);
+                event.getPlayer().sendMessage(ChatColor.RED + "Vous n'avez pas le droit de faire ça ici !");
+                return;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onBlockBreak(BlockBreakEvent event) {
+        // World protection rules
+        EnsilanPlayer ep = Core.getInstance().getPlayer(event.getPlayer().getUniqueId());
+        for (WorldProtectionRule rule : Core.getInstance().getWorldProtectionRules()) {
+            if (
+                rule.isProtected(event.getBlock().getLocation()) &&
+                !rule.isAllowedInProtectedLocation(event.getPlayer(), ep, event.getBlock().getLocation(), event)
+            ) {
+                event.setCancelled(true);
+                event.getPlayer().sendMessage(ChatColor.RED + "Vous n'avez pas le droit de faire ça ici !");
+                return;
+            }
+        }
+    }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        // World protection rules
+        EnsilanPlayer ep = Core.getInstance().getPlayer(event.getPlayer().getUniqueId());
+        for (WorldProtectionRule rule : Core.getInstance().getWorldProtectionRules()) {
+            if (
+                rule.isProtected(event.getBlock().getLocation()) &&
+                !rule.isAllowedInProtectedLocation(event.getPlayer(), ep, event.getBlock().getLocation(), event)
             ) {
                 event.setCancelled(true);
                 event.getPlayer().sendMessage(ChatColor.RED + "Vous n'avez pas le droit de faire ça ici !");
