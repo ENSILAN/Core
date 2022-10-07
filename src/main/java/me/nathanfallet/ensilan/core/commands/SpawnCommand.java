@@ -14,7 +14,7 @@ public class SpawnCommand implements CommandExecutor {
 	@Override
 	public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
 		// Check args
-		if (args.length == 1 && sender.hasPermission("popolserver.spawn.others")) {
+		if (args.length == 1 && sender.hasPermission("ensilan.spawn.others")) {
 			// Try to teleport someone else
 			Player p = Bukkit.getPlayer(args[0]);
 
