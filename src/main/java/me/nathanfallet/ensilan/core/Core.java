@@ -377,7 +377,7 @@ public class Core extends JavaPlugin {
                 FileConfiguration conf = getConfig();
                 connection = DriverManager.getConnection(
                         "jdbc:mysql://" + conf.getString("database.host") + ":" + conf.getInt("database.port") + "/"
-                                + conf.getString("database.database"),
+                                + conf.getString("database.database") + "?autoReconnect=true",
                         conf.getString("database.user"), conf.getString("database.password"));
             }
         } catch (SQLException | ClassNotFoundException e) {
