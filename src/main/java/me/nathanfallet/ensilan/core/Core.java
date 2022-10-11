@@ -90,13 +90,7 @@ public class Core extends JavaPlugin {
         }
 
         // Clear custom entities
-        for (World world : Bukkit.getWorlds()) {
-            for (Entity entity : world.getEntities()) {
-                if (entity.getCustomName() != null && entity.getCustomName().startsWith(ChatColor.COLOR_CHAR + "")) {
-                    entity.remove();
-                }
-            }
-        }
+        clearCustomEntities();
 
         // World protection rules
         if (getConfig().getBoolean("server.spawn_protection")) {
@@ -359,6 +353,9 @@ public class Core extends JavaPlugin {
         leaderboards = null;
         leaderboardGenerators = null;
 
+        // Clear custom entitues
+        clearCustomEntities();
+
         // Save and close database connection
         if (connection != null) {
             try {
@@ -577,6 +574,17 @@ public class Core extends JavaPlugin {
             config.save(f);
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    // Clear custom entities
+    private void clearCustomEntities() {
+        for (World world : Bukkit.getWorlds()) {
+            for (Entity entity : world.getEntities()) {
+                if (entity.getCustomName() != null && entity.getCustomName().startsWith(ChatColor.COLOR_CHAR + "")) {
+                    entity.remove();
+                }
+            }
         }
     }
 
